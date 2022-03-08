@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">Daun Teh</string>
+    <string name="app_name">Daun Teh</string>s
+    <string name="capture">Capture</string>
 </resources>
