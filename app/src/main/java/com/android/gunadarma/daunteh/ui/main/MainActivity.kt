@@ -4,10 +4,15 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.android.gunadarma.daunteh.databinding.ActivityMainBinding
+import java.lang.Exception
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -33,7 +38,31 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startCamera() {
-        // tobe continued
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+
+        cameraProviderFuture.addListener({
+            // Use to bind the lifecycle of cameras to the lifecycle owner
+            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+
+            // Preview camera to viewFinder
+            val preview = Preview.Builder()
+                .build()
+                .also { it.setSurfaceProvider(viewBinding.viewFinder.surfaceProvider) }
+
+            // Select back camera as default
+            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+            try {
+                // Unbind use cases before rebinding
+                cameraProvider.unbindAll()
+
+                // Bind use cases to camera
+                cameraProvider.bindToLifecycle(this, cameraSelector, preview)
+            } catch (e: Exception) {
+                // Catch exception
+                Log.e(TAG, "Use case binding failed", e)
+            }
+        }, ContextCompat.getMainExecutor(this))
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
