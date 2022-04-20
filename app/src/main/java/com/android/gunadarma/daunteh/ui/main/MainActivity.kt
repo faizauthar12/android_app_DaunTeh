@@ -12,12 +12,14 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.android.gunadarma.daunteh.databinding.ActivityMainBinding
+import com.android.gunadarma.daunteh.databinding.ContentMainRecognitionResultBinding
 import java.lang.Exception
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
     private lateinit var viewBinding: ActivityMainBinding
+    private lateinit var contentMainBinding: ContentMainRecognitionResultBinding
 
     private lateinit var cameraExecutor: ExecutorService
 
@@ -25,6 +27,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
+
+        contentMainBinding = viewBinding.contentRecognitionResult
 
         // Request camera permissions
         if (allPermissionsGranted()) {
@@ -35,6 +39,8 @@ class MainActivity : AppCompatActivity() {
 
         // Executor Service
         cameraExecutor = Executors.newSingleThreadExecutor()
+
+        contentMainBinding.tvCondition.text = "Kondisi: Layak"
     }
 
     private fun startCamera() {
