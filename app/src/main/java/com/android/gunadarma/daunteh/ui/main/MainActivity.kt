@@ -145,7 +145,7 @@ class MainActivity : AppCompatActivity() {
 
             val probability = tensorLabel.mapWithFloatValue["layak_olah"]
             probability?.let {
-                if (it > 0.40) {
+                if (it > 0.50) {
                     binding.tvCondition.text = "Kondisi: Layak Olah"
                 } else {
                     binding.tvCondition.text = "Kondisi: Tidak Layak Olah"
