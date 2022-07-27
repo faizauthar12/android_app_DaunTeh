@@ -9,11 +9,10 @@ import android.graphics.Matrix
 import android.os.Bundle
 import android.util.Log
 import android.util.Size
+import android.view.MotionEvent
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageProxy
-import androidx.camera.core.Preview
+import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -58,6 +57,7 @@ class MainActivity : AppCompatActivity() {
         cameraExecutor = Executors.newSingleThreadExecutor()
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
@@ -95,7 +95,32 @@ class MainActivity : AppCompatActivity() {
                 cameraProvider.unbindAll()
 
                 // Bind use cases to camera
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalyzer)
+                val camera =
+                    cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalyzer)
+                val cameraControl = camera.cameraControl
+
+                viewBinding.viewFinder.setOnTouchListener { view: View, motionEvent: MotionEvent ->
+                    when (motionEvent.action) {
+                        MotionEvent.ACTION_DOWN -> return@setOnTouchListener true
+                        MotionEvent.ACTION_UP -> {
+                            // Get the MeteringPointFactory from PreviewView
+                            val factory = viewBinding.viewFinder.getMeteringPointFactory()
+
+                            // Create a MeteringPoint from the tap coordinates
+                            val point = factory.createPoint(motionEvent.x, motionEvent.y)
+
+                            // Create a MeteringAction from the MeteringPoint, you can configure it to specify the metering mode
+                            val action = FocusMeteringAction.Builder(point).build()
+
+                            // Trigger the focus and metering. The method returns a ListenableFuture since the operation
+                            // is asynchronous. You can use it get notified when the focus is successful or if it fails.
+                            cameraControl.startFocusAndMetering(action)
+
+                            return@setOnTouchListener true
+                        }
+                        else -> return@setOnTouchListener false
+                    }
+                }
             } catch (e: Exception) {
                 // Catch exception
                 Log.e(TAG, "Use case binding failed", e)
