@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.util.Log
 import android.util.Size
 import android.view.MotionEvent
+import android.view.ScaleGestureDetector
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
@@ -98,7 +99,9 @@ class MainActivity : AppCompatActivity() {
                 val camera =
                     cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalyzer)
                 val cameraControl = camera.cameraControl
+                val cameraInfo = camera.cameraInfo
 
+                // tap to focus
                 viewBinding.viewFinder.setOnTouchListener { view: View, motionEvent: MotionEvent ->
                     when (motionEvent.action) {
                         MotionEvent.ACTION_DOWN -> return@setOnTouchListener true
@@ -121,6 +124,31 @@ class MainActivity : AppCompatActivity() {
                         else -> return@setOnTouchListener false
                     }
                 }
+
+                // Listen to pinch gestures
+                val listener = object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                    override fun onScale(detector: ScaleGestureDetector): Boolean {
+                        // Get the camera's current zoom ratio
+                        val currentZoomRatio = cameraInfo.zoomState.value?.zoomRatio ?: 0F
+
+                        // Get the pinch gesture's scaling factor
+                        val delta = detector.scaleFactor
+
+                        // Update the camera's zoom ratio. This is an asynchronous operation that returns
+                        // a ListenableFuture, allowing you to listen to when the operation completes.
+                        cameraControl.setZoomRatio(currentZoomRatio * delta)
+
+                        // Return true, as the event was handled
+                        return true
+                    }
+                }
+                val scaleGestureDetector = ScaleGestureDetector(this@MainActivity, listener)
+
+                viewBinding.viewFinder.setOnTouchListener { _, event ->
+                    scaleGestureDetector.onTouchEvent(event)
+                    return@setOnTouchListener true
+                }
+
             } catch (e: Exception) {
                 // Catch exception
                 Log.e(TAG, "Use case binding failed", e)
